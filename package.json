@@ -1,0 +1,39 @@
+{
+  "name": "dsv-bordero",
+  "version": "0.2.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "assets:pdf": "node scripts/copy-pdf-worker.mjs",
+    "predev": "npm run assets:pdf",
+    "dev": "next dev",
+    "prebuild": "npm run assets:pdf",
+    "build": "next build",
+    "start": "next start",
+    "install:alpine": "sh scripts/install-alpine.sh",
+    "update:alpine": "sh scripts/update-alpine.sh",
+    "test": "npm run build && node --test tests/rendered-html.test.mjs",
+    "lint": "eslint app db scripts tests next.config.ts"
+  },
+  "dependencies": {
+    "next": "16.2.9",
+    "pdf-lib": "1.17.1",
+    "pdfjs-dist": "4.10.38",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.2.9",
+    "typescript": "5.9.3"
+  },
+  "overrides": {
+    "postcss": "8.5.10"
+  },
+  "type": "module"
+}

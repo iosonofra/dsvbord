@@ -1,0 +1,38 @@
+#!/sbin/openrc-run
+
+name="DSV Borderò"
+description="Generazione e storico condiviso dei borderò DSV"
+
+: "${DSV_APP_DIR:=/opt/dsv-bordero}"
+: "${DSV_DATA_DIR:=/var/lib/dsv-bordero}"
+: "${DSV_HOST:=127.0.0.1}"
+: "${DSV_PORT:=3000}"
+
+supervisor="supervise-daemon"
+command="/usr/bin/node"
+command_args="${DSV_APP_DIR}/node_modules/next/dist/bin/next start --hostname ${DSV_HOST} --port ${DSV_PORT}"
+command_user="dsv-bordero:dsv-bordero"
+directory="${DSV_APP_DIR}"
+pidfile="/run/${RC_SVCNAME}.pid"
+respawn_delay=5
+respawn_max=0
+output_log="/var/log/dsv-bordero/app.log"
+error_log="/var/log/dsv-bordero/error.log"
+
+export NODE_ENV="production"
+export NEXT_TELEMETRY_DISABLED="1"
+export DSV_DATA_DIR
+
+depend() {
+  need net
+  after firewall
+}
+
+start_pre() {
+  checkpath --directory --owner dsv-bordero:dsv-bordero --mode 0750 "${DSV_DATA_DIR}"
+  checkpath --directory --owner dsv-bordero:dsv-bordero --mode 0750 /var/log/dsv-bordero
+  if [ ! -f "${DSV_APP_DIR}/.next/BUILD_ID" ]; then
+    eerror "Build assente. Eseguire npm install e npm run build in ${DSV_APP_DIR}."
+    return 1
+  fi
+}

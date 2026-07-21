@@ -1,0 +1,10 @@
+# Directory del repository clonato
+DSV_APP_DIR="/opt/dsv-bordero"
+
+# Database SQLite e PDF generati; mantenere fuori dal repository
+DSV_DATA_DIR="/var/lib/dsv-bordero"
+
+# Usare 127.0.0.1 se cloudflared gira sullo stesso host.
+# Usare 0.0.0.0 soltanto insieme a regole firewall adeguate.
+DSV_HOST="127.0.0.1"
+DSV_PORT="3000"
