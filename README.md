@@ -23,6 +23,8 @@ chmod +x scripts/install-alpine.sh scripts/update-alpine.sh
 
 L'app risponde su `http://127.0.0.1:3000` e viene avviata automaticamente insieme ad Alpine.
 
+Il repository deve trovarsi in `/opt/dsv-bordero` o in un'altra directory attraversabile dall'utente di servizio. Non clonarlo sotto `/root`: OpenRC viene eseguito come utente isolato `dsv-bordero` e non potrebbe leggere la build.
+
 La guida completa è disponibile in [INSTALL-ALPINE.md](INSTALL-ALPINE.md).
 
 ## Avvio manuale senza OpenRC

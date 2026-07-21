@@ -35,4 +35,8 @@ start_pre() {
     eerror "Build assente. Eseguire npm install e npm run build in ${DSV_APP_DIR}."
     return 1
   fi
+  if ! su -s /bin/sh -c "test -x '${DSV_APP_DIR}' && test -r '${DSV_APP_DIR}/.next/BUILD_ID'" dsv-bordero; then
+    eerror "${DSV_APP_DIR} non è accessibile all'utente dsv-bordero. Non installare l'app sotto /root."
+    return 1
+  fi
 }

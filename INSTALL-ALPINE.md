@@ -9,6 +9,8 @@ Questa procedura non usa Docker. Next.js viene compilato e avviato direttamente 
 - connessione a GitHub e al registro npm durante installazione e aggiornamenti;
 - porta locale 3000 disponibile.
 
+Il repository non deve trovarsi sotto `/root`. Usare `/opt/dsv-bordero`, perché il servizio viene eseguito con l'utente non privilegiato `dsv-bordero`.
+
 ## Installazione automatica
 
 ```sh

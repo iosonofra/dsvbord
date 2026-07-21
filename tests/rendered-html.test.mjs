@@ -162,10 +162,12 @@ test("ships a native Alpine service with persistent local data", async () => {
   assert.match(installer, /apk add --no-cache nodejs npm git/);
   assert.match(installer, /npm install/);
   assert.match(installer, /npm run build/);
+  assert.match(installer, /Il repository è sotto \/root/);
   assert.match(updater, /git pull --ff-only/);
   assert.match(updater, /\/var\/backups\/dsv-bordero/);
   assert.match(initd, /supervisor="supervise-daemon"/);
   assert.match(initd, /command_user="dsv-bordero:dsv-bordero"/);
+  assert.match(initd, /non è accessibile all'utente dsv-bordero/);
   assert.match(confd, /DSV_DATA_DIR="\/var\/lib\/dsv-bordero"/);
   assert.match(readme, /Cloudflare Tunnel/);
   assert.match(readme, /Cloudflare Access/);
