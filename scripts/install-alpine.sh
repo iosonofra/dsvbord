@@ -35,7 +35,7 @@ if ! id "$SERVICE_USER" >/dev/null 2>&1; then
 fi
 
 cd "$APP_DIR"
-npm install
+npm ci
 npm run build
 
 mkdir -p "$DATA_DIR" /var/log/dsv-bordero

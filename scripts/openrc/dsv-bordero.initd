@@ -32,7 +32,7 @@ start_pre() {
   checkpath --directory --owner dsv-bordero:dsv-bordero --mode 0750 "${DSV_DATA_DIR}"
   checkpath --directory --owner dsv-bordero:dsv-bordero --mode 0750 /var/log/dsv-bordero
   if [ ! -f "${DSV_APP_DIR}/.next/BUILD_ID" ]; then
-    eerror "Build assente. Eseguire npm install e npm run build in ${DSV_APP_DIR}."
+    eerror "Build assente. Eseguire npm ci e npm run build in ${DSV_APP_DIR}."
     return 1
   fi
   if ! su -s /bin/sh -c "test -x '${DSV_APP_DIR}' && test -r '${DSV_APP_DIR}/.next/BUILD_ID'" dsv-bordero; then

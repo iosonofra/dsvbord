@@ -10,7 +10,7 @@ Requisiti: Alpine Linux, accesso root e connessione Internet durante installazio
 apk add nodejs npm git
 git clone https://github.com/OWNER/REPOSITORY.git /opt/dsv-bordero
 cd /opt/dsv-bordero
-npm install
+npm ci
 npm run build
 ```
 
@@ -31,7 +31,7 @@ La guida completa è disponibile in [INSTALL-ALPINE.md](INSTALL-ALPINE.md).
 
 ```sh
 cd /opt/dsv-bordero
-npm install
+npm ci
 npm run build
 mkdir -p data
 DSV_DATA_DIR="$PWD/data" npm start

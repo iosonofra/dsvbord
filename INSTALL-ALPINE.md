@@ -21,7 +21,7 @@ chmod +x scripts/install-alpine.sh scripts/update-alpine.sh
 ./scripts/install-alpine.sh
 ```
 
-Lo script esegue anche `npm install` e `npm run build`, crea l'utente di sistema `dsv-bordero`, registra il servizio OpenRC e prepara `/var/lib/dsv-bordero`.
+Lo script esegue anche `npm ci` e `npm run build`, crea l'utente di sistema `dsv-bordero`, registra il servizio OpenRC e prepara `/var/lib/dsv-bordero`.
 
 ## Installazione manuale
 
@@ -31,7 +31,7 @@ Compilare l'app:
 apk add nodejs npm git
 git clone https://github.com/OWNER/REPOSITORY.git /opt/dsv-bordero
 cd /opt/dsv-bordero
-npm install
+npm ci
 npm run build
 ```
 
@@ -75,7 +75,7 @@ La procedura crea prima un archivio in `/var/backups/dsv-bordero`, poi esegue:
 
 ```sh
 git pull --ff-only
-npm install
+npm ci
 npm run build
 ```
 

@@ -29,13 +29,23 @@ esac
 HEALTH_URL="http://${HEALTH_HOST}:${DSV_PORT:-3000}/api/health"
 
 cd "$APP_DIR"
+
+TRACKED_CHANGES="$(git status --porcelain --untracked-files=no)"
+if [ -n "$TRACKED_CHANGES" ]; then
+  echo "Aggiornamento annullato: il repository contiene modifiche locali tracciate."
+  printf '%s\n' "$TRACKED_CHANGES"
+  echo "Metterle da parte con git stash prima di riprovare. Il servizio non è stato fermato."
+  exit 1
+fi
+
+git pull --ff-only
+
 rc-service dsv-bordero stop
 
 mkdir -p "$BACKUP_DIR"
 tar -czf "$BACKUP_DIR/data-$STAMP.tar.gz" -C "$DATA_DIR" .
 
-git pull --ff-only
-npm install
+npm ci
 npm run build
 
 rc-service dsv-bordero start

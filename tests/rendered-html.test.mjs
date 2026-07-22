@@ -184,10 +184,12 @@ test("ships a native Alpine service with persistent local data", async () => {
     readFile(new URL("../README.md", import.meta.url), "utf8"),
   ]);
   assert.match(installer, /apk add --no-cache nodejs npm git/);
-  assert.match(installer, /npm install/);
+  assert.match(installer, /npm ci/);
   assert.match(installer, /npm run build/);
   assert.match(installer, /Il repository è sotto \/root/);
   assert.match(updater, /git pull --ff-only/);
+  assert.match(updater, /git status --porcelain --untracked-files=no/);
+  assert.match(updater, /npm ci/);
   assert.match(updater, /\/var\/backups\/dsv-bordero/);
   assert.match(initd, /supervisor="supervise-daemon"/);
   assert.match(initd, /command_user="dsv-bordero:dsv-bordero"/);
