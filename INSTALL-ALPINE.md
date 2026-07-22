@@ -71,13 +71,9 @@ cd /opt/dsv-bordero
 ./scripts/update-alpine.sh
 ```
 
-La procedura crea prima un archivio in `/var/backups/dsv-bordero`, poi esegue:
+La procedura è completamente automatica: blocca esecuzioni simultanee, mette al sicuro in uno stash Git eventuali modifiche locali, acquisisce il nuovo codice con `git pull --ff-only`, ferma il servizio, crea un archivio in `/var/backups/dsv-bordero`, esegue `npm ci` e `npm run build`, aggiorna la definizione OpenRC, riavvia il servizio e ne verifica lo stato tramite `/api/health`.
 
-```sh
-git pull --ff-only
-npm ci
-npm run build
-```
+Il pull avviene prima del fermo, quindi un errore di rete o una cronologia Git divergente non interrompe l'app. Se una fase successiva fallisce, lo script tenta di riavviare automaticamente il servizio. Lo stash non viene riapplicato alla produzione per evitare conflitti; il relativo comando di recupero viene mostrato al termine.
 
 Database e PDF restano in `/var/lib/dsv-bordero`, fuori dal repository Git.
 

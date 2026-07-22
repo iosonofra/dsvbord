@@ -86,7 +86,16 @@ cd /opt/dsv-bordero
 ./scripts/update-alpine.sh
 ```
 
-Lo script arresta il servizio, salva un backup dei dati in `/var/backups/dsv-bordero`, esegue `git pull --ff-only`, aggiorna le dipendenze, ricompila e riavvia l'app.
+È sufficiente lanciare questo unico comando. Lo script:
+
+- impedisce che due aggiornamenti partano contemporaneamente;
+- conserva automaticamente in uno stash Git eventuali modifiche locali, compresi i file non tracciati;
+- esegue `git pull --ff-only` prima di interrompere il servizio;
+- salva un backup dei dati in `/var/backups/dsv-bordero`;
+- installa esattamente le dipendenze del lockfile, ricompila l'app e aggiorna la definizione OpenRC;
+- avvia il servizio e attende la risposta di `/api/health`.
+
+Se una fase successiva al fermo non riesce, lo script tenta automaticamente di riavviare il servizio. Le modifiche locali messe da parte non vengono riapplicate alla versione di produzione, per evitare nuovi conflitti; al termine viene mostrato il comando con cui recuperarle.
 
 ## Sviluppo
 

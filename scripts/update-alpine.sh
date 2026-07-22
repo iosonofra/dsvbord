@@ -14,6 +14,9 @@ APP_DIR="${DSV_APP_DIR:-/opt/dsv-bordero}"
 DATA_DIR="${DSV_DATA_DIR:-/var/lib/dsv-bordero}"
 BACKUP_DIR="${DSV_BACKUP_DIR:-/var/backups/dsv-bordero}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
+LOCK_DIR="/run/dsv-bordero-update.lock"
+SERVICE_NEEDS_START=0
+STASH_REF=""
 
 case "$APP_DIR" in
   /root|/root/*)
@@ -28,32 +31,68 @@ case "$HEALTH_HOST" in
 esac
 HEALTH_URL="http://${HEALTH_HOST}:${DSV_PORT:-3000}/api/health"
 
-cd "$APP_DIR"
-
-TRACKED_CHANGES="$(git status --porcelain --untracked-files=no)"
-if [ -n "$TRACKED_CHANGES" ]; then
-  echo "Aggiornamento annullato: il repository contiene modifiche locali tracciate."
-  printf '%s\n' "$TRACKED_CHANGES"
-  echo "Metterle da parte con git stash prima di riprovare. Il servizio non è stato fermato."
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+  echo "Un altro aggiornamento di DSV Borderò è già in esecuzione."
   exit 1
 fi
 
+cleanup() {
+  code=$?
+  trap - EXIT INT TERM
+  if [ "$SERVICE_NEEDS_START" -eq 1 ]; then
+    echo "L'aggiornamento non è terminato: provo a riavviare il servizio esistente."
+    rc-service dsv-bordero start >/dev/null 2>&1 || true
+  fi
+  rmdir "$LOCK_DIR" 2>/dev/null || true
+  exit "$code"
+}
+trap cleanup EXIT INT TERM
+
+cd "$APP_DIR"
+
+LOCAL_CHANGES="$(git status --porcelain)"
+if [ -n "$LOCAL_CHANGES" ]; then
+  STASH_MESSAGE="dsv-bordero-auto-update-$STAMP"
+  echo "Salvataggio automatico delle modifiche locali..."
+  git -c user.name="DSV Borderò updater" \
+    -c user.email="dsv-bordero@localhost" \
+    stash push --include-untracked -m "$STASH_MESSAGE"
+  STASH_REF="$(git stash list -1 --format='%gd')"
+  echo "Modifiche locali conservate in ${STASH_REF:-uno stash Git}."
+fi
+
+echo "Scaricamento dell'aggiornamento da GitHub..."
 git pull --ff-only
+chmod 0755 scripts/install-alpine.sh scripts/update-alpine.sh
 
-rc-service dsv-bordero stop
+SERVICE_NEEDS_START=1
+rc-service dsv-bordero stop || true
 
-mkdir -p "$BACKUP_DIR"
+mkdir -p "$DATA_DIR" "$BACKUP_DIR"
 tar -czf "$BACKUP_DIR/data-$STAMP.tar.gz" -C "$DATA_DIR" .
 
 npm ci
 npm run build
 
+cp scripts/openrc/dsv-bordero.initd /etc/init.d/dsv-bordero
+chmod 0755 /etc/init.d/dsv-bordero
+if [ ! -f /etc/conf.d/dsv-bordero ]; then
+  cp scripts/openrc/dsv-bordero.confd /etc/conf.d/dsv-bordero
+fi
+rc-update add dsv-bordero default >/dev/null
+
 rc-service dsv-bordero start
+SERVICE_NEEDS_START=0
 
 attempt=0
 while [ "$attempt" -lt 30 ]; do
   if wget -qO- "$HEALTH_URL" >/dev/null 2>&1; then
+    trap - EXIT INT TERM
+    rmdir "$LOCK_DIR" 2>/dev/null || true
     echo "Aggiornamento completato. Backup: $BACKUP_DIR/data-$STAMP.tar.gz"
+    if [ -n "$STASH_REF" ]; then
+      echo "Le precedenti modifiche locali sono recuperabili con: git stash apply $STASH_REF"
+    fi
     exit 0
   fi
   attempt=$((attempt + 1))

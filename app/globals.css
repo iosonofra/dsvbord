@@ -1310,12 +1310,16 @@ td input[data-state="success"] {
 .history-detail-table { margin-block-start: var(--space-md); max-height: 16rem; }
 
 @media (min-width: 48rem) {
-  .history-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .history-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .history-filters { grid-template-columns: repeat(2, minmax(9rem, .65fr)) minmax(12rem, 1fr) auto; align-items: end; }
   .history-table-head,
   .history-table article { grid-template-columns: minmax(18rem, 1.5fr) minmax(13rem, 1fr) 6rem 5rem minmax(9rem, auto); align-items: center; }
   .history-table-head { display: grid; padding: var(--space-xs) var(--space-md); background: var(--color-paper-2); color: var(--color-muted); font-size: var(--text-xs); font-weight: 700; }
   .history-value::before { display: none; }
+}
+
+@media (min-width: 80rem) {
+  .history-metrics { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }
 
 @media (min-width: 64rem) {

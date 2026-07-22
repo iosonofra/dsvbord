@@ -77,8 +77,16 @@ export async function listSharedOrders(params: Record<string, string | number | 
   });
   const today = new Date();
   const localDay = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const tomorrowStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const nextMonthStart = new Date(today.getFullYear(), today.getMonth() + 1, 1);
   query.set("today", localDay);
   query.set("month", localDay.slice(0, 7));
+  query.set("todayStart", todayStart.toISOString());
+  query.set("todayEnd", tomorrowStart.toISOString());
+  query.set("monthStart", monthStart.toISOString());
+  query.set("monthEnd", nextMonthStart.toISOString());
   const response = await fetch(`/api/orders?${query}`, { cache: "no-store" });
   if (!response.ok) throw new Error("Shared archive is unavailable");
   return response.json() as Promise<ArchivePage>;

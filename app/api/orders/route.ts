@@ -107,11 +107,21 @@ export async function GET(request: Request) {
     const total = Number(count.value);
     const today = params.get("today")?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
     const month = params.get("month")?.slice(0, 7) ?? today.slice(0, 7);
-    const todayCount = db.prepare("SELECT count(*) AS value FROM orders WHERE archived_at IS NULL AND created_at >= ? AND created_at <= ?")
-      .get(`${today}T00:00:00.000Z`, `${today}T23:59:59.999Z`) as { value: number };
-    const monthTotals = db.prepare("SELECT coalesce(sum(shipments), 0) AS shipments, coalesce(sum(packages), 0) AS packages FROM orders WHERE archived_at IS NULL AND created_at >= ? AND created_at <= ?")
-      .get(`${month}-01T00:00:00.000Z`, `${month}-31T23:59:59.999Z`) as { shipments: number; packages: number };
-    const metrics: ArchiveMetrics = { total, today: Number(todayCount.value), monthShipments: Number(monthTotals.shipments), monthPackages: Number(monthTotals.packages) };
+    const validInstant = (name: string, fallback: string) => {
+      const value = params.get(name); return value && Number.isFinite(Date.parse(value)) ? new Date(value).toISOString() : fallback;
+    };
+    const fallbackTodayStart = `${today}T00:00:00.000Z`;
+    const fallbackTodayEnd = new Date(Date.parse(fallbackTodayStart) + 86_400_000).toISOString();
+    const fallbackMonthStart = `${month}-01T00:00:00.000Z`;
+    const fallbackMonthEnd = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 1)).toISOString();
+    const todayStart = validInstant("todayStart", fallbackTodayStart), todayEnd = validInstant("todayEnd", fallbackTodayEnd);
+    const monthStart = validInstant("monthStart", fallbackMonthStart), monthEnd = validInstant("monthEnd", fallbackMonthEnd);
+    const todayTotals = db.prepare("SELECT count(*) AS borderos, coalesce(sum(shipments), 0) AS shipments, coalesce(sum(packages), 0) AS packages FROM orders WHERE archived_at IS NULL AND created_at >= ? AND created_at < ?")
+      .get(todayStart, todayEnd) as { borderos: number; shipments: number; packages: number };
+    const monthTotals = db.prepare("SELECT coalesce(sum(shipments), 0) AS shipments, coalesce(sum(packages), 0) AS packages FROM orders WHERE archived_at IS NULL AND created_at >= ? AND created_at < ?")
+      .get(monthStart, monthEnd) as { shipments: number; packages: number };
+    const metrics: ArchiveMetrics = { total, today: Number(todayTotals.borderos), todayShipments: Number(todayTotals.shipments),
+      todayPackages: Number(todayTotals.packages), monthShipments: Number(monthTotals.shipments), monthPackages: Number(monthTotals.packages) };
     return Response.json({ orders: result.map(toSavedOrder), total, page, pageSize,
       pages: Math.max(1, Math.ceil(total / pageSize)), metrics }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

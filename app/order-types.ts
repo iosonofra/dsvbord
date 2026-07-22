@@ -35,6 +35,8 @@ export type SyncProgress = {
 export type ArchiveMetrics = {
   total: number;
   today: number;
+  todayShipments: number;
+  todayPackages: number;
   monthShipments: number;
   monthPackages: number;
 };

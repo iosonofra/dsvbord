@@ -7,7 +7,7 @@ import { archiveSharedOrder, getLocalOrder, getPendingLocalOrderCount, getShared
   restoreSharedOrder, syncLocalOrders } from "../order-store";
 import type { ArchiveMetrics, SavedOrder as Item, SyncProgress } from "../order-types";
 
-const emptyMetrics: ArchiveMetrics = { total: 0, today: 0, monthShipments: 0, monthPackages: 0 };
+const emptyMetrics: ArchiveMetrics = { total: 0, today: 0, todayShipments: 0, todayPackages: 0, monthShipments: 0, monthPackages: 0 };
 const localDate = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 const borderoNumber = (item: Item) => item.sequence ? `${item.createdAt.slice(0, 10).replaceAll("-", "")}-${String(item.sequence).padStart(3, "0")}` : "–";
 const title = (item: Item) => `Borderò ${borderoNumber(item)}`;
@@ -49,15 +49,21 @@ export default function History() {
     } catch {
       const records = await listLocalOrders();
       const normalized = query.toLocaleLowerCase("it");
-      const local = records.map(record => record.meta).filter(item => {
-        if (trash || item.archivedAt) return false;
+      const archive = records.map(record => record.meta).filter(item => !item.archivedAt);
+      const local = archive.filter(item => {
+        if (trash) return false;
         const haystack = `${item.fileName} ${item.references} ${item.rows?.map(row => `${row.ref} ${row.consignmentId} ${row.recipient}`).join(" ")}`.toLocaleLowerCase("it");
         return (!normalized || haystack.includes(normalized)) && (!from || item.createdAt.slice(0, 10) >= from) && (!to || item.createdAt.slice(0, 10) <= to);
       }).sort((a, b) => sort === "date-asc" ? a.createdAt.localeCompare(b.createdAt) : b.createdAt.localeCompare(a.createdAt));
       setItems(local.slice((page - 1) * 25, page * 25)); setTotal(local.length); setPages(Math.max(1, Math.ceil(local.length / 25)));
-      setMetrics({ total: local.length, today: local.filter(i => i.createdAt.slice(0, 10) === localDate()).length,
-        monthShipments: local.filter(i => i.createdAt.slice(0, 7) === localDate().slice(0, 7)).reduce((sum, i) => sum + i.shipments, 0),
-        monthPackages: local.filter(i => i.createdAt.slice(0, 7) === localDate().slice(0, 7)).reduce((sum, i) => sum + i.packages, 0) });
+      const now = new Date(), todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(),
+        tomorrowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime(),
+        monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime(), nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime();
+      const todayItems = archive.filter(i => { const value = Date.parse(i.createdAt); return value >= todayStart && value < tomorrowStart; });
+      const monthItems = archive.filter(i => { const value = Date.parse(i.createdAt); return value >= monthStart && value < nextMonthStart; });
+      setMetrics({ total: local.length, today: todayItems.length,
+        todayShipments: todayItems.reduce((sum, i) => sum + i.shipments, 0), todayPackages: todayItems.reduce((sum, i) => sum + i.packages, 0),
+        monthShipments: monthItems.reduce((sum, i) => sum + i.shipments, 0), monthPackages: monthItems.reduce((sum, i) => sum + i.packages, 0) });
       setSource("local");
     }
   }, [from, page, query, sort, to, trash]);
@@ -127,9 +133,11 @@ export default function History() {
 
       <section className="history-metrics" aria-label="Riepilogo archivio">
         <dl><dt>Borderò {trash ? "nel cestino" : "totali"}</dt><dd>{source === "loading" ? "…" : metrics.total}</dd></dl>
-        <dl><dt>Generati oggi</dt><dd>{metrics.today}</dd></dl>
-        <dl><dt>Spedizioni del mese</dt><dd>{metrics.monthShipments}</dd></dl>
-        <dl><dt>Colli del mese</dt><dd>{metrics.monthPackages}</dd></dl>
+        <dl><dt>Generati oggi</dt><dd>{source === "loading" ? "…" : metrics.today}</dd></dl>
+        <dl><dt>Spedizioni di oggi</dt><dd>{source === "loading" ? "…" : metrics.todayShipments}</dd></dl>
+        <dl><dt>Colli di oggi</dt><dd>{source === "loading" ? "…" : metrics.todayPackages}</dd></dl>
+        <dl><dt>Spedizioni del mese</dt><dd>{source === "loading" ? "…" : metrics.monthShipments}</dd></dl>
+        <dl><dt>Colli del mese</dt><dd>{source === "loading" ? "…" : metrics.monthPackages}</dd></dl>
       </section>
 
       <section className="archive-toolbar" aria-label="Ricerca e filtri">
