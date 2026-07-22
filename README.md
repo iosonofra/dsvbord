@@ -51,6 +51,8 @@ Con l'installazione OpenRC la directory predefinita è `/var/lib/dsv-bordero`. N
 
 I PDF originali selezionati vengono elaborati nel browser e non sono caricati sul server. PDF.js, il worker PDF e pdf-lib sono inclusi nel bundle: a runtime l'app non contatta CDN.
 
+I nomi e gli indirizzi conservano caratteri internazionali e maiuscole/minuscole originali. I PDF incorporano localmente Noto Sans con subsetting, quindi testi come `Mühlenstraße`, `François` e `Łódź` restano fedeli senza dipendere da font o servizi esterni.
+
 ## Cloudflare Tunnel
 
 Se `cloudflared` gira sullo stesso host Alpine:

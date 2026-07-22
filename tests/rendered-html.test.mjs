@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
+import fontkit from "@pdf-lib/fontkit";
+import { PDFDocument } from "pdf-lib";
 import { BORDER_ROWS_PER_PAGE, FINAL_BORDER_ROWS, paginateBorderoRows } from "../app/bordero-pagination.mjs";
 
 test("builds DSV Borderò as a native Next.js application", async () => {
@@ -55,6 +57,28 @@ test("bundles PDF processing locally and keeps browser saving compatible", async
   const pkg = JSON.parse(packageJson);
   assert.equal(pkg.dependencies["pdfjs-dist"], "4.10.38");
   assert.equal(pkg.dependencies["pdf-lib"], "1.17.1");
+});
+
+test("preserves international characters in generated PDFs", async () => {
+  const [regularBytes, boldBytes, pageSource] = await Promise.all([
+    readFile(new URL("../public/fonts/NotoSans-Regular.ttf", import.meta.url)),
+    readFile(new URL("../public/fonts/NotoSans-Bold.ttf", import.meta.url)),
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+  ]);
+  const document = await PDFDocument.create();
+  document.registerFontkit(fontkit);
+  const regular = await document.embedFont(regularBytes, { subset: true });
+  const bold = await document.embedFont(boldBytes, { subset: true });
+  const page = document.addPage();
+  page.drawText("Mühlenstraße · François · Łódź", { x: 24, y: 700, font: regular, size: 12 });
+  page.drawText("MÜHLENSTRASSE · FRANÇOIS · ŁÓDŹ", { x: 24, y: 680, font: bold, size: 12 });
+  const bytes = await document.save();
+  assert.ok(bytes.length > 1_000);
+  assert.match(pageSource, /doc\.registerFontkit\(fontkitModule\.default\)/);
+  assert.match(pageSource, /NotoSans-Regular\.ttf/);
+  assert.match(pageSource, /NotoSans-Bold\.ttf/);
+  assert.doesNotMatch(pageSource, /StandardFonts\.Helvetica/);
+  assert.match(pageSource, /const words=\(value\|\|"-"\)\.split/);
 });
 
 test("paginates bordero rows without orphaning totals and signatures", () => {
